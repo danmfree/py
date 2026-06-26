@@ -1,57 +1,8 @@
-import cv2
-import sys
+from picamera import PiCameraa
+from time import sleep
 
-def main():
-    # 1. Initialize the camera
-    # Index 0 is typically the default Raspberry Pi camera
-    cap = cv2.VideoCapture(0)
-    
-    if not cap.isOpened():
-        print("Error: Could not open the Raspberry Pi camera.")
-        sys.exit()
-        
-    print("Press 'space' to capture the image and process it...")
-
-    while True:
-        # Read a frame from the camera live feed
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: Failed to grab frame.")
-            break
-
-        # Show the live feed so you can position your camera
-        cv2.imshow("Live Feed (Press Space to Capture)", frame)
-        
-        # Wait for key press
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord(' '):  # Spacebar pressed
-            captured_frame = frame.copy()
-            break
-        elif key == 27:  # ESC pressed to exit
-            print("Exiting...")
-            cap.release()
-            cv2.destroyAllWindows()
-            sys.exit()
-
-    # Release the camera since we have our picture
-    cap.release()
-    cv2.destroyWindow("Live Feed (Press Space to Capture)")
-
-    # 2. Convert the captured image to Grayscale
-    gray_image = cv2.cvtColor(captured_frame, cv2.COLOR_BGR2GRAY)
-
-    # 3. Apply Binary Threshold
-    # Syntax: cv2.threshold(source, thresh_value, max_value, type)
-    # Any pixel value above 127 turns white (255), everything else turns black (0)
-    _, threshold_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
-
-    # 4. Display the two resulting images in separate windows
-    cv2.imshow("Window 1 - Grayscale Image", gray_image)
-    cv2.imshow("Window 2 - Binary Threshold Image", threshold_image)
-
-    print("Displaying images. Press any key on the windows to close.")
-    cv2.waitKey(0)  # Wait indefinitely until a key is pressed
-    cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    main()
+camera = PiCamera()
+camera.rotation = 180
+camera.start_preview()
+sleep(5)
+camera.stop_preview()
