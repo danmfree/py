@@ -4,19 +4,21 @@ import numpy as np
 import pytesseract
 
 class MCBDectection:
+
     def __init__(self):
         self.result = ""
         self.image = None
-        self.camera = Picamera2() 
     
     def detect(self):
-        self.camera.start()
-        frame = self.camera.capture_array()
-        self.camera.stop()
 
-        if frame is None: 
-            print("Failed to capture image")
-            return None
+        picam2 = Picamera2()
+        picam2.start()
+        frame = picam2.capture_array()
+        picam2.stop()
+
+        cv2.imshow("Captured Image", frame)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         #resize image
         resized = cv2.resize(frame, (640, 480))
@@ -95,3 +97,6 @@ class MCBDectection:
         cv2.destroyAllWindows()
 
         return text
+
+detector = MCBDectection()
+detector.detect()
