@@ -7,27 +7,19 @@ class MCBDectection:
     def __init__(self):
         self.result = ""
         self.image = None
-
-        #start Camera
-        picam2 = Picamera2()
-        picam2.start()
-        frame = picam2.capture_array()
-        picam2.stop()
-
-    
+        self.camera = Picamera2() 
     
     def detect(self):
-        # Capture image from camera
-        src = self.camera.capture_array()
+        self.camera.start()
+        frame = self.camera.capture_array()
+        self.camera.stop()
 
-        if src is None:
-            print("Failed to capture image from camera.")
+        if frame is None: 
+            print("Failed to capture image")
             return None
-        
-        src = cv2.cvtColor(src, cv2.COLOR_BGR2RGB)
 
         #resize image
-        resized = cv2.resize(src, (640, 480))
+        resized = cv2.resize(frame, (640, 480))
 
         # Convert to grayscale
         gray = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
@@ -82,14 +74,14 @@ class MCBDectection:
 
         croppedBlurred = cv2.GaussianBlur(denoised, (3, 3), 0)
 
-        sharp = cv2.addWeighted(croppedBlurred, 2, croppedBlurred, -1.5, 5)
+        sharp = cv2.addWeighted(croppedGray, 1.5, croppedBlurred, -0.5, 0)
         
         # blakc and white 
-        bw = cv2.threshold(sharp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, bw = cv2.threshold(sharp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         # OCR 
 
-        text = pytesseract.image_to_string(bw[1], config='--psm 6')
+        text = pytesseract.image_to_string(bw, config='--psm 6')
 
         self.result = text
         self.image = bw
