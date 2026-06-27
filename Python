@@ -1,20 +1,105 @@
 from picamera2 import Picamera2
 import cv2
+import numpy as np
+import pytesseract
 
-picam2 = Picamera2()
+class MCBDectection:
+    def __init__(self):
+        self.result = ""
+        self.image = None
 
-picam2.start()
+        #start Camera
+        picam2 = Picamera2()
+        picam2.start()
+        frame = picam2.capture_array()
+        picam2.stop()
 
-frame = picam2.capture_array()
+    
+    
+    def detect(self):
+        # Capture image from camera
+        src = self.camera.capture_array()
 
-rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if src is None:
+            print("Failed to capture image from camera.")
+            return None
+        
+        src = cv2.cvtColor(src, cv2.COLOR_BGR2RGB)
 
-gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
+        #resize image
+        resized = cv2.resize(src, (640, 480))
 
-binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)[1]
+        # Convert to grayscale
+        gray = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
 
-cv2.imshow("Camera", rgb)
-cv2.imshow("Gray Camera", gray)
-cv2.imshow("Binary Camera", binary)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+        #blur image
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+        #detect edges
+        edges = cv2.Canny(blurred, 15, 150)
+
+        #inntialize kernel for morphological operations
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+
+        #perform morphological closing to fill gaps in edges
+        closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+        # apply contours 
+        contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        maxArea = 0
+        mcbContour = None   
+
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if area > 500 and area > maxArea:
+                maxArea = area
+                mcbContour = contour
+        
+        if mcbContour is None:
+            print("No MCB detected.")
+            return None
+        
+        # Get bounding box of the detected MCB
+        x, y, w, h = cv2.boundingRect(mcbContour)
+
+        croppedMcb = resized[y:y+h, x:x+w  ]
+
+        # text Roi
+        textX = int(w * 0.15)
+        textY = int(h * 0.33)
+        textW = int(w * 0.35)
+        textH = int(h * 0.33)
+
+        croppedText = croppedMcb[textY:textY+textH, textX:textX+textW]
+
+        #image processing
+
+        croppedGray = cv2.cvtColor(croppedText, cv2.COLOR_RGB2GRAY)
+
+        #denoise image
+        denoised = cv2.bilateralFilter(croppedGray, 9, 75, 75)
+
+        croppedBlurred = cv2.GaussianBlur(denoised, (3, 3), 0)
+
+        sharp = cv2.addWeighted(croppedBlurred, 2, croppedBlurred, -1.5, 5)
+        
+        # blakc and white 
+        bw = cv2.threshold(sharp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # OCR 
+
+        text = pytesseract.image_to_string(bw[1], config='--psm 6')
+
+        self.result = text
+        self.image = bw
+
+        print("Detected text:", text)
+
+        #Display the processed image
+        cv2.imshow("Processed Image", bw)
+
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        return text
