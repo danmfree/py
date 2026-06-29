@@ -21,7 +21,7 @@ class MCBDectection:
         cv2.destroyAllWindows()
 
         #resize image
-        resized = cv2.resize(frame, (640, 480))
+        resized = cv2.resize(frame, (1200, 1000)) 
 
         # Convert to grayscale
         gray = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
@@ -46,7 +46,7 @@ class MCBDectection:
 
         for contour in contours:
             area = cv2.contourArea(contour)
-            if area > 500 and area > maxArea:
+            if area > 5000 and area > maxArea:
                 maxArea = area
                 mcbContour = contour
         
