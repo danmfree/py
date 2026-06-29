@@ -9,7 +9,7 @@ class MCBDectection:
         self.result = ""
         self.image = None
     
-    def detect(self):
+    def detect(self, roiX=None, roiY=None, roiWidth=None, roiHeight=None):
 
         picam2 = Picamera2()
         picam2.start()
@@ -21,52 +21,75 @@ class MCBDectection:
         cv2.destroyAllWindows()
 
         #resize image
-        resized = cv2.resize(frame, (1200, 1000)) 
+        resized = cv2.resize(frame, (1200, 1000))
 
-        # Convert to grayscale
-        gray = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
+        if roiX is None:
 
-        #blur image
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+            print("Draw a Box")
+            roi = cv2.selectROI("Select ROI press ENTER to confirm, ESC to skip", resized, fromCenter=False, showCrosshair=True)
+            cv2.destroyAllWindows()
 
-        #detect edges
-        edges = cv2.Canny(blurred, 15, 150)
+        if any(v != 0 for v in roi):
+            roiX, roiY, roiWidth, roiHeight = roi
+            print(f"Manual ROI Selected: x={roiX}, y={roiY}, w={roiWidth}, h={roiHeight"}
+        else:
+            print("No ROI - Switching to Auto")
 
-        #inntialize kernel for morphological operations
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+        if (roiX is not None and roiY is not None, roiWidth is not None, roiHeight is not None):
+            print ("Using Manual Roi")
 
-        #perform morphological closing to fill gaps in edges
-        closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
-
-        # apply contours 
-        contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        maxArea = 0
-        mcbContour = None   
-
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            if area > 5000 and area > maxArea:
-                maxArea = area
-                mcbContour = contour
+            croppedMcb = resized[roiY:roiY + roiHeight,roiX:roiX + roiiWidth]
+            croppedText = croppedMcb
         
-        if mcbContour is None:
-            print("No MCB detected.")
-            return None
+        else:
+            print ("Using Automatic Detection")
+
+            # Convert to grayscale
+            gray = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
+
+            #blur image
+            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+            #detect edges
+            edges = cv2.Canny(blurred, 15, 150)
+
+            #inntialize kernel for morphological operations
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+
+            #perform morphological closing to fill gaps in edges
+            closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+            # apply contours 
+            contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            maxArea = 0
+            mcbContour = None   
+
+            for contour in contours:
+                area = cv2.contourArea(contour)
+                if area > 5000 and area > maxArea:
+                    maxArea = area
+                    mcbContour = contour
         
-        # Get bounding box of the detected MCB
-        x, y, w, h = cv2.boundingRect(mcbContour)
+            if mcbContour is None:
+                print("No MCB detected.")
+                return None
+        
+            # Get bounding box of the detected MCB
+            x, y, w, h = cv2.boundingRect(mcbContour)
 
-        croppedMcb = resized[y:y+h, x:x+w  ]
+            croppedMcb = resized[y:y+h, x:x+w  ]
 
-        # text Roi
-        textX = int(w * 0.15)
-        textY = int(h * 0.33)
-        textW = int(w * 0.35)
-        textH = int(h * 0.33)
+            # text Roi
+            textX = int(w * 0.15)
+            textY = int(h * 0.33)
+            textW = int(w * 0.35)
+            textH = int(h * 0.33)
 
-        croppedText = croppedMcb[textY:textY+textH, textX:textX+textW]
+            croppedText = croppedMcb[textY:textY+textH, textX:textX+textW]
 
+
+        ---------------------------------------------------------------
         #image processing
 
         croppedGray = cv2.cvtColor(croppedText, cv2.COLOR_RGB2GRAY)
