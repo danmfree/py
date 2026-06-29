@@ -31,14 +31,14 @@ class MCBDectection:
 
         if any(v != 0 for v in roi):
             roiX, roiY, roiWidth, roiHeight = roi
-            print(f"Manual ROI Selected: x={roiX}, y={roiY}, w={roiWidth}, h={roiHeight"}
+            print(f"Manual ROI Selected: x={roiX}, y={roiY}, w={roiWidth}, h={roiHeight}")
         else:
             print("No ROI - Switching to Auto")
 
         if (roiX is not None and roiY is not None, roiWidth is not None, roiHeight is not None):
             print ("Using Manual Roi")
 
-            croppedMcb = resized[roiY:roiY + roiHeight,roiX:roiX + roiiWidth]
+            croppedMcb = resized[roiY:roiY + roiHeight,roiX:roiX + roiWidth]
             croppedText = croppedMcb
         
         else:
@@ -88,8 +88,6 @@ class MCBDectection:
 
             croppedText = croppedMcb[textY:textY+textH, textX:textX+textW]
 
-
-        ---------------------------------------------------------------
         #image processing
 
         croppedGray = cv2.cvtColor(croppedText, cv2.COLOR_RGB2GRAY)
