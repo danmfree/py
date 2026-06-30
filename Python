@@ -4,6 +4,9 @@ import cv2
 import numpy as np
 import pytesseract
 
+HOST = "0.0.0.0"
+PORT = 5000
+
 class MCBDectection:
 
     def __init__(self):
@@ -121,10 +124,7 @@ class MCBDectection:
         return text
 
 
-
-TCP
-Host = ""
-PORT = 5000
+# TCP
 
 detector = MCBDectection()
 
@@ -141,7 +141,7 @@ conn,addr = server.accept()
 print("Connected:", addr)
 
 while True:
-    commmand =conn.recv(1024).decode()
+    command =conn.recv(1024).decode()
 
     if command == "CAPTURE":
         print("Capture command received")
