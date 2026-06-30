@@ -1,3 +1,4 @@
+import socket
 from picamera2 import Picamera2
 import cv2
 import numpy as np
@@ -119,5 +120,42 @@ class MCBDectection:
 
         return text
 
+
+
+TCP
+Host = ""
+PORT = 5000
+
 detector = MCBDectection()
-detector.detect()
+
+server = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
+
+server.bind((HOST,PORT))
+
+server.listen(1)
+
+print("Waiting for Laptop...")
+
+conn,addr = server.accept()
+
+print("Connected:", addr)
+
+while True:
+    commmand =conn.recv(1024).decode()
+
+    if command == "CAPTURE":
+        print("Capture command received")
+        detector.detect()
+
+        conn.send(b"DONE")
+
+    elif command == "READ":
+        print("Sending OCR result") 
+
+        conn.send(detector.result.encode()) 
+
+    elif command == "EXIT":
+        break
+
+conn.close()
+server.close()
