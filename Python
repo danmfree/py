@@ -16,11 +16,6 @@ class MCBDectection:
     
     def detect(self, roiX=None, roiY=None, roiWidth=None, roiHeight=None):
 
-        picam2 = Picamera2()
-        picam2.start()
-        frame = picam2.capture_array()
-        picam2.stop()
-
         #resize image
         resized = self.frame
 
