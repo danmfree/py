@@ -1,4 +1,5 @@
 import socket
+import struct
 from picamera2 import Picamera2
 import cv2
 import numpy as np
@@ -19,22 +20,10 @@ class MCBDectection:
         #resize image
         resized = self.frame
 
-       if resized is None:
+        if resized is None:
             resized = cv2.imread("capture.jpg")
 
-        if roiX is None:
-
-            print("Draw a Box")
-            roi = cv2.selectROI("Select ROI press ENTER to confirm, ESC to skip", resized, fromCenter=False, showCrosshair=True)
-            cv2.destroyAllWindows()
-
-        if any(v != 0 for v in roi):
-            roiX, roiY, roiWidth, roiHeight = roi
-            print(f"Manual ROI Selected: x={roiX}, y={roiY}, w={roiWidth}, h={roiHeight}")
-        else:
-            print("No ROI - Switching to Auto")
-
-        if (roiX is not None and roiY is not None, roiWidth is not None, roiHeight is not None):
+        if (roiX is not None and roiY is not None and roiWidth is not None and roiHeight is not None):
             print ("Using Manual Roi")
 
             croppedMcb = resized[roiY:roiY + roiHeight,roiX:roiX + roiWidth]
@@ -111,7 +100,7 @@ class MCBDectection:
         print("Detected text:", text)
 
         #Display the processed image
-        cv2.imshow("Processed Image", bw)
+        #cv2.imshow("Processed Image", bw)
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -153,11 +142,11 @@ while True:
 
         cv2.imwrite("capture.jpg", resized)
 
-        success, encoded = cv2.imencode(".jgp", resized)
+        success, encoded = cv2.imencode(".jpg", resized)
 
         imageBytes = encoded.tobytes()
 
-        conn.sendall(struct.pack(">I", len(imageBytes))
+        conn.sendall(struct.pack(">I", len(imageBytes)))
 
         conn.sendall(imageBytes)
 
@@ -167,7 +156,7 @@ while True:
         detector.detect()
         conn.send(b"DONE")
 
-    elif command.startswitch("ROI:")
+    elif command.startswith("ROI:"):
         coords = command[4:].split(",") 
 
         roiX = int(coords[0])
