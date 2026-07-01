@@ -12,6 +12,7 @@ class MCBDectection:
     def __init__(self):
         self.result = ""
         self.image = None
+        self.frame = None
     
     def detect(self, roiX=None, roiY=None, roiWidth=None, roiHeight=None):
 
@@ -20,12 +21,11 @@ class MCBDectection:
         frame = picam2.capture_array()
         picam2.stop()
 
-        cv2.imshow("Captured Image", frame)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
         #resize image
-        resized = cv2.resize(frame, (1200, 1000))
+        resized = self.frame
+
+       if resized is None:
+            resized = cv2.imread("capture.jpg")
 
         if roiX is None:
 
@@ -141,11 +141,46 @@ conn,addr = server.accept()
 print("Connected:", addr)
 
 while True:
-    command =conn.recv(1024).decode()
+    command = conn.recv(1024).decode()
 
     if command == "CAPTURE":
         print("Capture command received")
+
+        picam2 = Picamera2()
+        picam2.start()
+        frame = picam2.capture_array()
+        picam2.stop()
+
+        #resize image
+        resized = cv2.resize(frame, (1200, 1000))
+
+        detector.frame = resized
+
+        cv2.imwrite("capture.jpg", resized)
+
+        success, encoded = cv2.imencode(".jgp", resized)
+
+        imageBytes = encoded.tobytes()
+
+        conn.sendall(struct.pack(">I", len(imageBytes))
+
+        conn.sendall(imageBytes)
+
+        print("Image Sent")
+
+    elif command == "AUTO":
         detector.detect()
+        conn.send(b"DONE")
+
+    elif command.startswitch("ROI:")
+        coords = command[4:].split(",") 
+
+        roiX = int(coords[0])
+        roiY = int(coords[1])
+        roiWidth = int(coords[2])
+        roiHeight = int(coords[3])
+
+        detector.detect(roiX,roiY,roiWidth,roiHeight)
 
         conn.send(b"DONE")
 
