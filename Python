@@ -135,8 +135,9 @@ while True:
         frame = picam2.capture_array()
         picam2.stop()
 
+        resized = cv2.imread("/home/aeis/Desktop/HI.jpg") # get rid of this
         #resize image
-        resized = cv2.resize(frame, (1200, 1000))
+        resized = cv2.resize(resized, (1920, 1080)) # change this
 
         detector.frame = resized
 
