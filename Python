@@ -124,16 +124,16 @@ conn,addr = server.accept()
 
 print("Connected:", addr)
 
+picam2 = Picamera2()
+picam2.start()
+
 while True:
     command = conn.recv(1024).decode()
 
     if command == "CAPTURE":
         print("Capture command received")
 
-        picam2 = Picamera2()
-        picam2.start()
         frame = picam2.capture_array()
-        picam2.stop()
 
         resized = cv2.imread("/home/aeis/Desktop/HI.jpg") # get rid of this
         #resize image
@@ -175,6 +175,7 @@ while True:
         conn.send(detector.result.encode()) 
 
     elif command == "EXIT":
+        picam2.stop()
         break
 
 conn.close()
